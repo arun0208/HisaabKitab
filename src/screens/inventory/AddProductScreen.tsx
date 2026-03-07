@@ -116,7 +116,7 @@ export const AddProductScreen = () => {
           <Ionicons name={showCategories ? 'chevron-up' : 'chevron-down'} size={20} color={Colors.textSecondary} />
         </TouchableOpacity>
         {showCategories && (
-          <View style={styles.dropdownList}>
+          <ScrollView style={styles.dropdownList} nestedScrollEnabled>
             {PRODUCT_CATEGORIES.map((cat) => (
               <TouchableOpacity
                 key={cat}
@@ -126,7 +126,7 @@ export const AddProductScreen = () => {
                 <Text style={[styles.dropdownText, category === cat && styles.dropdownTextActive]}>{cat}</Text>
               </TouchableOpacity>
             ))}
-          </View>
+          </ScrollView>
         )}
 
         <Input
@@ -177,7 +177,7 @@ export const AddProductScreen = () => {
               <Ionicons name={showUnits ? 'chevron-up' : 'chevron-down'} size={20} color={Colors.textSecondary} />
             </TouchableOpacity>
             {showUnits && (
-              <View style={styles.dropdownList}>
+              <ScrollView style={styles.dropdownList} nestedScrollEnabled>
                 {UNITS.map((u) => (
                   <TouchableOpacity
                     key={u}
@@ -187,7 +187,7 @@ export const AddProductScreen = () => {
                     <Text style={[styles.dropdownText, unit === u && styles.dropdownTextActive]}>{u}</Text>
                   </TouchableOpacity>
                 ))}
-              </View>
+              </ScrollView>
             )}
           </View>
         </View>

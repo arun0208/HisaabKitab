@@ -102,6 +102,20 @@ export interface DashboardStats {
   topProducts: { name: string; quantity: number }[];
 }
 
+export interface AnalyticsData {
+  revenue: number;
+  salesCount: number;
+  avgOrder: number;
+  profit: number;
+  topProducts: { name: string; quantity: number; revenue: number }[];
+  salesByCustomer: { name: string; totalAmount: number; salesCount: number }[];
+  salesByProduct: { name: string; totalAmount: number; quantity: number }[];
+  paymentBreakdown: { cash: number; upi: number; credit: number };
+  dailySales: { day: string; amount: number; count: number }[];
+}
+
+export type DateRangeKey = 'today' | 'week' | 'month' | 'year' | 'custom';
+
 export type PaymentType = 'cash' | 'upi' | 'credit';
 export type OrderStatus = 'pending' | 'confirmed' | 'delivered' | 'cancelled';
 export type ReminderFrequency = 'weekly' | 'monthly' | 'custom';

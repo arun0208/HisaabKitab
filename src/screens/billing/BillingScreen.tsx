@@ -8,6 +8,7 @@ import {
   Alert,
   Modal,
   TextInput,
+  ScrollView,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -19,13 +20,16 @@ import { formatCurrency } from '../../constants';
 import { useSalesStore } from '../../store/salesStore';
 import { useInventoryStore } from '../../store/inventoryStore';
 import { useCustomerStore } from '../../store/customerStore';
-import { Product, PaymentType } from '../../types';
+import { useAuthStore } from '../../store/authStore';
+import { Product, PaymentType, Sale } from '../../types';
+import { generateAndShareBill, printBill } from '../../utils/billPdf';
 
 export const BillingScreen = () => {
   const { t } = useTranslation();
   const { cart, discount, addToCart, removeFromCart, updateCartQuantity, setDiscount, clearCart, getCartTotal, getGrandTotal, completeSale } = useSalesStore();
   const { products, loadProducts } = useInventoryStore();
   const { customers, loadCustomers } = useCustomerStore();
+  const user = useAuthStore((s) => s.user);
 
   const [showProductSearch, setShowProductSearch] = useState(false);
   const [productSearch, setProductSearch] = useState('');
@@ -34,6 +38,8 @@ export const BillingScreen = () => {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | undefined>();
   const [showCustomerSelect, setShowCustomerSelect] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [completedSale, setCompletedSale] = useState<Sale | null>(null);
+  const [showBillSuccess, setShowBillSuccess] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -58,6 +64,26 @@ export const BillingScreen = () => {
     setProductSearch('');
   };
 
+  const handleShareBill = async () => {
+    if (!completedSale) return;
+    try {
+      const customerName = selectedCustomerId ? customers.find((c) => c.id === selectedCustomerId)?.name : undefined;
+      await generateAndShareBill(completedSale, user?.storeName || 'HisaabKitab Store', customerName);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to share bill');
+    }
+  };
+
+  const handlePrintBill = async () => {
+    if (!completedSale) return;
+    try {
+      const customerName = selectedCustomerId ? customers.find((c) => c.id === selectedCustomerId)?.name : undefined;
+      await printBill(completedSale, user?.storeName || 'HisaabKitab Store', customerName);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to print bill');
+    }
+  };
+
   const handleCompleteSale = async () => {
     if (cart.length === 0) return;
     if (selectedPayment === 'credit' && !selectedCustomerId) {
@@ -67,15 +93,21 @@ export const BillingScreen = () => {
 
     setLoading(true);
     try {
-      await completeSale(selectedPayment, selectedCustomerId);
+      const sale = await completeSale(selectedPayment, selectedCustomerId);
       setShowPayment(false);
-      setSelectedCustomerId(undefined);
-      Alert.alert(t('billing.billGenerated'));
+      setCompletedSale(sale);
+      setShowBillSuccess(true);
     } catch (error) {
       Alert.alert('Error', 'Failed to generate bill');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDismissBillSuccess = () => {
+    setShowBillSuccess(false);
+    setCompletedSale(null);
+    setSelectedCustomerId(undefined);
   };
 
   const selectedCustomer = customers.find((c) => c.id === selectedCustomerId);
@@ -248,7 +280,7 @@ export const BillingScreen = () => {
             )}
 
             {showCustomerSelect && (
-              <View style={styles.customerList}>
+              <ScrollView style={styles.customerList} nestedScrollEnabled>
                 {customers.map((c) => (
                   <TouchableOpacity
                     key={c.id}
@@ -259,7 +291,7 @@ export const BillingScreen = () => {
                     <Text style={styles.customerItemPhone}>{c.phone}</Text>
                   </TouchableOpacity>
                 ))}
-              </View>
+              </ScrollView>
             )}
 
             <View style={styles.paymentTotal}>
@@ -271,6 +303,48 @@ export const BillingScreen = () => {
               <Button title={t('common.cancel')} onPress={() => setShowPayment(false)} variant="outline" size="lg" style={{ flex: 1 }} />
               <Button title={t('billing.generateBill')} onPress={handleCompleteSale} loading={loading} size="lg" style={{ flex: 1.5 }} />
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Bill Success Modal */}
+      <Modal visible={showBillSuccess} animationType="fade" transparent>
+        <View style={styles.paymentOverlay}>
+          <View style={styles.billSuccessSheet}>
+            <View style={styles.successIconContainer}>
+              <Ionicons name="checkmark-circle" size={64} color={Colors.success} />
+            </View>
+            <Text style={styles.billSuccessTitle}>{t('billing.billReady')}</Text>
+            <Text style={styles.billSuccessAmount}>
+              {completedSale ? formatCurrency(completedSale.totalAmount) : ''}
+            </Text>
+            <Text style={styles.billSuccessBillNo}>
+              #{completedSale?.id.slice(0, 8).toUpperCase()}
+            </Text>
+
+            <View style={styles.billSuccessActions}>
+              <TouchableOpacity style={styles.billActionButton} onPress={handleShareBill}>
+                <View style={[styles.billActionIcon, { backgroundColor: Colors.infoBg }]}>
+                  <Ionicons name="share-social" size={24} color={Colors.info} />
+                </View>
+                <Text style={styles.billActionLabel}>{t('billing.shareBill')}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.billActionButton} onPress={handlePrintBill}>
+                <View style={[styles.billActionIcon, { backgroundColor: Colors.accentBg }]}>
+                  <Ionicons name="print" size={24} color={Colors.accent} />
+                </View>
+                <Text style={styles.billActionLabel}>{t('billing.downloadPdf')}</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Button
+              title={t('billing.dismiss')}
+              onPress={handleDismissBillSuccess}
+              variant="outline"
+              size="lg"
+              style={{ marginTop: Spacing.lg, width: '100%' }}
+            />
           </View>
         </View>
       </Modal>
@@ -580,5 +654,53 @@ const styles = StyleSheet.create({
   paymentActions: {
     flexDirection: 'row',
     gap: Spacing.md,
+  },
+  // Bill Success Modal
+  billSuccessSheet: {
+    backgroundColor: Colors.surface,
+    borderRadius: 24,
+    padding: Spacing.xxl,
+    marginHorizontal: Spacing.xxl,
+    alignItems: 'center',
+  },
+  successIconContainer: {
+    marginBottom: Spacing.md,
+  },
+  billSuccessTitle: {
+    fontSize: FontSize.xxl,
+    fontWeight: FontWeight.bold,
+    color: Colors.text,
+    marginBottom: Spacing.sm,
+  },
+  billSuccessAmount: {
+    fontSize: FontSize.hero,
+    fontWeight: FontWeight.bold,
+    color: Colors.primary,
+    marginBottom: Spacing.xs,
+  },
+  billSuccessBillNo: {
+    fontSize: FontSize.sm,
+    color: Colors.textSecondary,
+    marginBottom: Spacing.xl,
+  },
+  billSuccessActions: {
+    flexDirection: 'row',
+    gap: Spacing.xxl,
+  },
+  billActionButton: {
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  billActionIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  billActionLabel: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.medium,
+    color: Colors.text,
   },
 });

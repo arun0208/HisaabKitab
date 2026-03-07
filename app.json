@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "HisaabKitab-temp",
-    "slug": "HisaabKitab-temp",
+    "name": "HisaabKitab",
+    "slug": "hisaabkitab",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -9,19 +9,20 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#7B4B2A"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.hisaabkitab.app"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#7B4B2A",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "package": "com.hisaabkitab.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -30,7 +31,9 @@
       "expo-sqlite",
       "expo-secure-store",
       "expo-localization",
-      "expo-barcode-scanner"
+      "expo-barcode-scanner",
+      "expo-asset",
+      "expo-font"
     ]
   }
 }

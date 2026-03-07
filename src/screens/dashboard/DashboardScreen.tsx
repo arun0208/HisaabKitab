@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card, StatCard, Badge } from '../../components/common';
@@ -95,12 +96,11 @@ export const DashboardScreen = () => {
           <TouchableOpacity
             style={styles.langButton}
             onPress={() => {
-              const { i18n } = require('../../i18n');
               i18n.changeLanguage(i18n.language === 'en' ? 'hi' : 'en');
             }}
           >
             <Text style={styles.langText}>
-              {require('i18next').default.language === 'en' ? '\u0939\u093F' : 'EN'}
+              {i18n.language === 'en' ? '\u0939\u093F' : 'EN'}
             </Text>
           </TouchableOpacity>
         </View>

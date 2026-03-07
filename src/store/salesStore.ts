@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Sale, SaleItem, DashboardStats } from '../types';
+import { Sale, SaleItem, DashboardStats, AnalyticsData } from '../types';
 import { getDatabase, generateId } from '../db/database';
 
 interface CartItem {
@@ -25,6 +25,7 @@ interface SalesState {
   completeSale: (paymentType: 'cash' | 'upi' | 'credit', customerId?: string) => Promise<Sale>;
   loadSales: (limit?: number) => Promise<void>;
   loadDashboardStats: () => Promise<DashboardStats>;
+  loadAnalytics: (startDate: string, endDate: string) => Promise<AnalyticsData>;
 }
 
 export const useSalesStore = create<SalesState>((set, get) => ({
@@ -223,6 +224,105 @@ export const useSalesStore = create<SalesState>((set, get) => ({
       totalOutstanding: outstanding?.total || 0,
       weeklySales: weeklyRows.map((r: any) => ({ day: r.day, amount: r.amount })),
       topProducts: topRows.map((r: any) => ({ name: r.name, quantity: r.quantity })),
+    };
+  },
+
+  loadAnalytics: async (startDate: string, endDate: string): Promise<AnalyticsData> => {
+    const db = await getDatabase();
+
+    // Overall stats for the period
+    const overallStats = await db.getFirstAsync<any>(
+      `SELECT COUNT(*) as count, COALESCE(SUM(total_amount), 0) as revenue, COALESCE(SUM(discount), 0) as totalDiscount
+       FROM sales WHERE date(created_at) >= ? AND date(created_at) <= ?`,
+      [startDate, endDate]
+    );
+
+    const revenue = overallStats?.revenue || 0;
+    const salesCount = overallStats?.count || 0;
+    const avgOrder = salesCount > 0 ? revenue / salesCount : 0;
+
+    // Estimate profit: sum(qty * (price - cost_price)) for all sale items in range
+    const profitRow = await db.getFirstAsync<any>(
+      `SELECT COALESCE(SUM(si.quantity * (si.price - COALESCE(p.cost_price, 0))), 0) as profit
+       FROM sale_items si
+       JOIN sales s ON si.sale_id = s.id
+       LEFT JOIN products p ON si.product_id = p.id
+       WHERE date(s.created_at) >= ? AND date(s.created_at) <= ?`,
+      [startDate, endDate]
+    );
+    const profit = profitRow?.profit || 0;
+
+    // Top products
+    const topProducts = await db.getAllAsync<any>(
+      `SELECT si.product_name as name, SUM(si.quantity) as quantity, SUM(si.quantity * si.price) as revenue
+       FROM sale_items si
+       JOIN sales s ON si.sale_id = s.id
+       WHERE date(s.created_at) >= ? AND date(s.created_at) <= ?
+       GROUP BY si.product_name
+       ORDER BY quantity DESC
+       LIMIT 10`,
+      [startDate, endDate]
+    );
+
+    // Sales by customer
+    const salesByCustomer = await db.getAllAsync<any>(
+      `SELECT COALESCE(c.name, 'Walk-in') as name, SUM(s.total_amount) as totalAmount, COUNT(*) as salesCount
+       FROM sales s
+       LEFT JOIN customers c ON s.customer_id = c.id
+       WHERE date(s.created_at) >= ? AND date(s.created_at) <= ?
+       GROUP BY COALESCE(c.name, 'Walk-in')
+       ORDER BY totalAmount DESC
+       LIMIT 10`,
+      [startDate, endDate]
+    );
+
+    // Sales by product
+    const salesByProduct = await db.getAllAsync<any>(
+      `SELECT si.product_name as name, SUM(si.quantity * si.price) as totalAmount, SUM(si.quantity) as quantity
+       FROM sale_items si
+       JOIN sales s ON si.sale_id = s.id
+       WHERE date(s.created_at) >= ? AND date(s.created_at) <= ?
+       GROUP BY si.product_name
+       ORDER BY totalAmount DESC
+       LIMIT 10`,
+      [startDate, endDate]
+    );
+
+    // Payment breakdown
+    const paymentRows = await db.getAllAsync<any>(
+      `SELECT payment_type, COALESCE(SUM(total_amount), 0) as total
+       FROM sales
+       WHERE date(created_at) >= ? AND date(created_at) <= ?
+       GROUP BY payment_type`,
+      [startDate, endDate]
+    );
+    const paymentBreakdown = { cash: 0, upi: 0, credit: 0 };
+    paymentRows.forEach((r: any) => {
+      if (r.payment_type in paymentBreakdown) {
+        (paymentBreakdown as any)[r.payment_type] = r.total;
+      }
+    });
+
+    // Daily sales for the period
+    const dailySales = await db.getAllAsync<any>(
+      `SELECT date(created_at) as day, COALESCE(SUM(total_amount), 0) as amount, COUNT(*) as count
+       FROM sales
+       WHERE date(created_at) >= ? AND date(created_at) <= ?
+       GROUP BY date(created_at)
+       ORDER BY day ASC`,
+      [startDate, endDate]
+    );
+
+    return {
+      revenue,
+      salesCount,
+      avgOrder,
+      profit,
+      topProducts: topProducts.map((r: any) => ({ name: r.name, quantity: r.quantity, revenue: r.revenue })),
+      salesByCustomer: salesByCustomer.map((r: any) => ({ name: r.name, totalAmount: r.totalAmount, salesCount: r.salesCount })),
+      salesByProduct: salesByProduct.map((r: any) => ({ name: r.name, totalAmount: r.totalAmount, quantity: r.quantity })),
+      paymentBreakdown,
+      dailySales: dailySales.map((r: any) => ({ day: r.day, amount: r.amount, count: r.count })),
     };
   },
 }));

@@ -4,6 +4,7 @@ import en from './en';
 import hi from './hi';
 
 i18n.use(initReactI18next).init({
+  compatibilityJSON: 'v3',
   resources: {
     en: { translation: en },
     hi: { translation: hi },
