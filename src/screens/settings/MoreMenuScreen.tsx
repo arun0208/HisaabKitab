@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
@@ -75,7 +75,7 @@ export const MoreMenuScreen = () => {
       {/* Store Profile Card */}
       <Card style={styles.profileCard}>
         <View style={styles.profileIcon}>
-          <Ionicons name="storefront" size={28} color={Colors.primary} />
+          <Image source={require('../../../assets/icon.png')} style={styles.profileLogoImage} />
         </View>
         <View style={styles.profileInfo}>
           <Text style={styles.storeName}>{user?.storeName}</Text>
@@ -137,6 +137,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: Spacing.lg,
+    overflow: 'hidden',
+  },
+  profileLogoImage: {
+    width: 56,
+    height: 56,
+    borderRadius: BorderRadius.lg,
+    resizeMode: 'cover',
   },
   profileInfo: {
     flex: 1,

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,12 +12,13 @@ import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Card, StatCard, Badge } from '../../components/common';
+import { Card, StatCard, Badge, VoiceFab } from '../../components/common';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius, Shadow } from '../../constants/theme';
 import { formatCurrency } from '../../constants';
 import { useAuthStore } from '../../store/authStore';
 import { useSalesStore } from '../../store/salesStore';
 import { useInventoryStore } from '../../store/inventoryStore';
+import { useSupplierStore } from '../../store/supplierStore';
 import { DashboardStats } from '../../types';
 
 export const DashboardScreen = () => {
@@ -27,11 +28,15 @@ export const DashboardScreen = () => {
   const loadDashboardStats = useSalesStore((s) => s.loadDashboardStats);
   const loadProducts = useInventoryStore((s) => s.loadProducts);
   const getLowStockProducts = useInventoryStore((s) => s.getLowStockProducts);
+  const loadSuppliers = useSupplierStore((s) => s.loadSuppliers);
+  const suppliers = useSupplierStore((s) => s.suppliers);
+  const getTotalSupplierOutstanding = useSupplierStore((s) => s.getTotalSupplierOutstanding);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadData = useCallback(async () => {
     await loadProducts();
+    await loadSuppliers();
     const data = await loadDashboardStats();
     setStats(data);
   }, []);
@@ -80,6 +85,7 @@ export const DashboardScreen = () => {
   ];
 
   const lowStockProducts = getLowStockProducts().slice(0, 5);
+  const supplierOutstanding = getTotalSupplierOutstanding();
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -161,6 +167,41 @@ export const DashboardScreen = () => {
           </View>
         </View>
 
+        {/* Supplier Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>{t('dashboard.suppliers')}</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('MoreTab', { screen: 'SupplierList' })}>
+              <Text style={styles.viewAll}>{t('dashboard.viewAll')}</Text>
+            </TouchableOpacity>
+          </View>
+          <Card style={styles.supplierCard}>
+            <View style={styles.supplierRow}>
+              <View style={styles.supplierStat}>
+                <View style={[styles.supplierIconBg, { backgroundColor: Colors.infoBg }]}>
+                  <Ionicons name="people" size={20} color={Colors.info} />
+                </View>
+                <View>
+                  <Text style={styles.supplierStatValue}>{suppliers.length}</Text>
+                  <Text style={styles.supplierStatLabel}>{t('dashboard.totalSuppliers')}</Text>
+                </View>
+              </View>
+              <View style={styles.supplierDivider} />
+              <View style={styles.supplierStat}>
+                <View style={[styles.supplierIconBg, { backgroundColor: supplierOutstanding > 0 ? Colors.errorBg : Colors.successBg }]}>
+                  <Ionicons name="wallet" size={20} color={supplierOutstanding > 0 ? Colors.error : Colors.success} />
+                </View>
+                <View>
+                  <Text style={[styles.supplierStatValue, { color: supplierOutstanding > 0 ? Colors.error : Colors.success }]}>
+                    {formatCurrency(Math.abs(supplierOutstanding))}
+                  </Text>
+                  <Text style={styles.supplierStatLabel}>{t('dashboard.owedToSuppliers')}</Text>
+                </View>
+              </View>
+            </View>
+          </Card>
+        </View>
+
         {/* Top Products */}
         {stats?.topProducts && stats.topProducts.length > 0 && (
           <View style={styles.section}>
@@ -214,6 +255,9 @@ export const DashboardScreen = () => {
 
         <View style={{ height: Spacing.xxxl }} />
       </ScrollView>
+
+      {/* Voice FAB */}
+      <VoiceFab onCommandExecuted={loadData} />
     </SafeAreaView>
   );
 };
@@ -269,10 +313,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     marginTop: Spacing.xxl,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
   sectionTitle: {
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
     color: Colors.text,
+    marginBottom: Spacing.md,
+  },
+  viewAll: {
+    fontSize: FontSize.sm,
+    color: Colors.primary,
+    fontWeight: FontWeight.semibold,
     marginBottom: Spacing.md,
   },
   actionsGrid: {
@@ -300,6 +356,42 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.semibold,
     color: Colors.text,
     textAlign: 'center',
+  },
+  supplierCard: {
+    padding: Spacing.xl,
+  },
+  supplierRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  supplierStat: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  supplierIconBg: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  supplierStatValue: {
+    fontSize: FontSize.xl,
+    fontWeight: FontWeight.bold,
+    color: Colors.text,
+  },
+  supplierStatLabel: {
+    fontSize: FontSize.xs,
+    color: Colors.textSecondary,
+    marginTop: 1,
+  },
+  supplierDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: Colors.borderLight,
+    marginHorizontal: Spacing.md,
   },
   topProductRow: {
     flexDirection: 'row',

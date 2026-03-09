@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { Input, Button } from '../../components/common';
@@ -39,7 +39,7 @@ export const StoreSetupScreen = () => {
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <View style={styles.iconContainer}>
-            <Ionicons name="storefront" size={40} color={Colors.primary} />
+            <Image source={require('../../../assets/icon.png')} style={styles.logoImage} />
           </View>
           <Text style={styles.title}>{t('auth.setupStore')}</Text>
         </View>
@@ -106,6 +106,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.lg,
+    overflow: 'hidden',
+  },
+  logoImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 20,
+    resizeMode: 'cover',
   },
   title: {
     fontSize: FontSize.xxl,

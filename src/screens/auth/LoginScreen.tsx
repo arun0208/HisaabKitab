@@ -63,7 +63,7 @@ export const LoginScreen = () => {
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <View style={styles.logoContainer}>
-            <Ionicons name="book" size={48} color={Colors.white} />
+            <Image source={require('../../../assets/icon.png')} style={styles.logoImage} />
           </View>
           <Text style={styles.appName}>{t('common.appName')}</Text>
           <Text style={styles.tagline}>{t('auth.tagline')}</Text>
@@ -137,6 +137,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.lg,
+    overflow: 'hidden',
+  },
+  logoImage: {
+    width: 88,
+    height: 88,
+    borderRadius: 22,
+    resizeMode: 'cover',
   },
   appName: {
     fontSize: FontSize.hero,

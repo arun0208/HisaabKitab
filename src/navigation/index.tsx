@@ -44,6 +44,7 @@ import { SupplierListScreen } from '../screens/suppliers/SupplierListScreen';
 import { AddSupplierScreen } from '../screens/suppliers/AddSupplierScreen';
 import { SupplierDetailScreen } from '../screens/suppliers/SupplierDetailScreen';
 import { CreatePurchaseOrderScreen } from '../screens/suppliers/CreatePurchaseOrderScreen';
+import { AddSupplierCreditRecordScreen } from '../screens/suppliers/AddSupplierCreditRecordScreen';
 import { AnalyticsScreen } from '../screens/analytics/AnalyticsScreen';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
@@ -92,6 +93,7 @@ const MoreNavigator = () => (
     <MoreStack.Screen name="AddSupplier" component={AddSupplierScreen} />
     <MoreStack.Screen name="SupplierDetail" component={SupplierDetailScreen} />
     <MoreStack.Screen name="CreatePurchaseOrder" component={CreatePurchaseOrderScreen} />
+    <MoreStack.Screen name="AddSupplierCreditRecord" component={AddSupplierCreditRecordScreen} />
     <MoreStack.Screen name="Analytics" component={AnalyticsScreen} />
   </MoreStack.Navigator>
 );

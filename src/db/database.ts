@@ -57,7 +57,20 @@ const initDatabase = async (database: SQLite.SQLiteDatabase) => {
       phone TEXT NOT NULL,
       address TEXT,
       company TEXT,
+      total_credit REAL NOT NULL DEFAULT 0,
+      total_paid REAL NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS supplier_credit_records (
+      id TEXT PRIMARY KEY,
+      supplier_id TEXT NOT NULL,
+      amount REAL NOT NULL,
+      type TEXT NOT NULL CHECK(type IN ('credit', 'payment')),
+      description TEXT,
+      date TEXT NOT NULL DEFAULT (datetime('now')),
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE CASCADE
     );
 
     CREATE TABLE IF NOT EXISTS purchase_orders (
@@ -108,7 +121,16 @@ const initDatabase = async (database: SQLite.SQLiteDatabase) => {
     CREATE INDEX IF NOT EXISTS idx_sale_items_sale ON sale_items(sale_id);
     CREATE INDEX IF NOT EXISTS idx_purchase_orders_supplier ON purchase_orders(supplier_id);
     CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
+    CREATE INDEX IF NOT EXISTS idx_supplier_credit_supplier ON supplier_credit_records(supplier_id);
   `);
+
+  // Migration for existing databases: add new columns to suppliers table
+  try {
+    await database.runAsync('ALTER TABLE suppliers ADD COLUMN total_credit REAL NOT NULL DEFAULT 0');
+  } catch (_) { /* column may already exist */ }
+  try {
+    await database.runAsync('ALTER TABLE suppliers ADD COLUMN total_paid REAL NOT NULL DEFAULT 0');
+  } catch (_) { /* column may already exist */ }
 };
 
 export const generateId = (): string => {

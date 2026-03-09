@@ -49,7 +49,28 @@ export interface Supplier {
   phone: string;
   address?: string;
   company?: string;
+  totalCredit: number;
+  totalPaid: number;
   createdAt: string;
+}
+
+export interface SupplierCreditRecord {
+  id: string;
+  supplierId: string;
+  amount: number;
+  type: 'credit' | 'payment';
+  description?: string;
+  date: string;
+  createdAt: string;
+}
+
+export type VoiceCommandType = 'add_credit' | 'add_payment' | 'add_stock';
+
+export interface VoiceCommand {
+  type: VoiceCommandType;
+  name: string;
+  amount?: number;
+  quantity?: number;
 }
 
 export interface PurchaseOrder {

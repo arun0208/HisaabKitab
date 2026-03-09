@@ -42,6 +42,7 @@ export type MoreStackParamList = {
   AddSupplier: { supplierId?: string } | undefined;
   SupplierDetail: { supplierId: string };
   CreatePurchaseOrder: { supplierId: string };
+  AddSupplierCreditRecord: { supplierId: string; type: 'credit' | 'payment' };
   Analytics: undefined;
   Settings: undefined;
 };

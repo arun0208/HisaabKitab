@@ -1,13 +1,14 @@
 import { create } from 'zustand';
-import { Supplier, PurchaseOrder, PurchaseOrderItem } from '../types';
+import { Supplier, PurchaseOrder, PurchaseOrderItem, SupplierCreditRecord } from '../types';
 import { getDatabase, generateId } from '../db/database';
 
 interface SupplierState {
   suppliers: Supplier[];
   orders: PurchaseOrder[];
+  supplierCreditRecords: SupplierCreditRecord[];
   isLoading: boolean;
   loadSuppliers: () => Promise<void>;
-  addSupplier: (supplier: Omit<Supplier, 'id' | 'createdAt'>) => Promise<void>;
+  addSupplier: (supplier: Omit<Supplier, 'id' | 'totalCredit' | 'totalPaid' | 'createdAt'>) => Promise<void>;
   updateSupplier: (supplier: Supplier) => Promise<void>;
   deleteSupplier: (id: string) => Promise<void>;
   createPurchaseOrder: (
@@ -18,11 +19,15 @@ interface SupplierState {
   loadOrders: (supplierId?: string) => Promise<void>;
   updateOrderStatus: (orderId: string, status: PurchaseOrder['status']) => Promise<void>;
   getSupplierById: (id: string) => Supplier | undefined;
+  addSupplierCreditRecord: (record: Omit<SupplierCreditRecord, 'id' | 'createdAt'>) => Promise<void>;
+  loadSupplierCreditRecords: (supplierId: string) => Promise<void>;
+  getTotalSupplierOutstanding: () => number;
 }
 
 export const useSupplierStore = create<SupplierState>((set, get) => ({
   suppliers: [],
   orders: [],
+  supplierCreditRecords: [],
   isLoading: false,
 
   loadSuppliers: async () => {
@@ -36,6 +41,8 @@ export const useSupplierStore = create<SupplierState>((set, get) => ({
         phone: row.phone,
         address: row.address,
         company: row.company,
+        totalCredit: row.total_credit || 0,
+        totalPaid: row.total_paid || 0,
         createdAt: row.created_at,
       }));
       set({ suppliers, isLoading: false });
@@ -50,7 +57,7 @@ export const useSupplierStore = create<SupplierState>((set, get) => ({
     const id = generateId();
     const now = new Date().toISOString();
     await db.runAsync(
-      `INSERT INTO suppliers (id, name, phone, address, company, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO suppliers (id, name, phone, address, company, total_credit, total_paid, created_at) VALUES (?, ?, ?, ?, ?, 0, 0, ?)`,
       [id, supplier.name, supplier.phone, supplier.address || null, supplier.company || null, now]
     );
     await get().loadSuppliers();
@@ -157,5 +164,58 @@ export const useSupplierStore = create<SupplierState>((set, get) => ({
 
   getSupplierById: (id) => {
     return get().suppliers.find((s) => s.id === id);
+  },
+
+  addSupplierCreditRecord: async (record) => {
+    const db = await getDatabase();
+    const id = generateId();
+    const now = new Date().toISOString();
+
+    await db.runAsync(
+      `INSERT INTO supplier_credit_records (id, supplier_id, amount, type, description, date, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [id, record.supplierId, record.amount, record.type, record.description || null, record.date, now]
+    );
+
+    if (record.type === 'credit') {
+      await db.runAsync(
+        'UPDATE suppliers SET total_credit = total_credit + ? WHERE id = ?',
+        [record.amount, record.supplierId]
+      );
+    } else {
+      await db.runAsync(
+        'UPDATE suppliers SET total_paid = total_paid + ? WHERE id = ?',
+        [record.amount, record.supplierId]
+      );
+    }
+
+    await get().loadSuppliers();
+    await get().loadSupplierCreditRecords(record.supplierId);
+  },
+
+  loadSupplierCreditRecords: async (supplierId) => {
+    try {
+      const db = await getDatabase();
+      const rows = await db.getAllAsync<any>(
+        'SELECT * FROM supplier_credit_records WHERE supplier_id = ? ORDER BY date DESC',
+        [supplierId]
+      );
+      const supplierCreditRecords: SupplierCreditRecord[] = rows.map((row) => ({
+        id: row.id,
+        supplierId: row.supplier_id,
+        amount: row.amount,
+        type: row.type,
+        description: row.description,
+        date: row.date,
+        createdAt: row.created_at,
+      }));
+      set({ supplierCreditRecords });
+    } catch (error) {
+      console.error('Error loading supplier credit records:', error);
+    }
+  },
+
+  getTotalSupplierOutstanding: () => {
+    return get().suppliers.reduce((sum, s) => sum + (s.totalCredit - s.totalPaid), 0);
   },
 }));

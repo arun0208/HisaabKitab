@@ -6,3 +6,4 @@ export { EmptyState } from './EmptyState';
 export { ScreenHeader } from './ScreenHeader';
 export { SearchBar } from './SearchBar';
 export { StatCard } from './StatCard';
+export { VoiceFab } from './VoiceFab';
