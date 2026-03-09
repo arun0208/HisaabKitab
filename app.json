@@ -13,7 +13,11 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.hisaabkitab.app"
+      "bundleIdentifier": "com.hisaabkitab.app",
+      "infoPlist": {
+        "NSSpeechRecognitionUsageDescription": "Allow HisaabKitab to use speech recognition for voice commands.",
+        "NSMicrophoneUsageDescription": "Allow HisaabKitab to use the microphone for voice commands."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -22,7 +26,11 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "package": "com.hisaabkitab.app"
+      "package": "com.hisaabkitab.app",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/icon.png"
@@ -34,10 +42,18 @@
       "expo-barcode-scanner",
       "expo-asset",
       "expo-font",
-      ["@jamsch/expo-speech-recognition", {
-        "speechRecognitionPermission": "Allow HisaabKitab to use speech recognition for voice commands.",
-        "microphonePermission": "Allow HisaabKitab to use the microphone for voice commands."
-      }]
-    ]
+      [
+        "@jamsch/expo-speech-recognition",
+        {
+          "speechRecognitionPermission": "Allow HisaabKitab to use speech recognition for voice commands.",
+          "microphonePermission": "Allow HisaabKitab to use the microphone for voice commands."
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "fa36df28-6880-4fd1-aa32-d63b18e355b5"
+      }
+    }
   }
 }

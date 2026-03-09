@@ -159,6 +159,13 @@ export const InventoryListScreen = () => {
             {products.length} {t('inventory.allProducts').toLowerCase()}
           </Text>
         </View>
+
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => navigation.navigate('AddProduct')}
+        >
+          <Ionicons name="add" size={22} color={Colors.white} />
+        </TouchableOpacity>
       </View>
 
       {/* Stock Summary Badges */}
@@ -231,13 +238,13 @@ export const InventoryListScreen = () => {
       />
 
       {/* Floating Action Button */}
-      <TouchableOpacity
+      {/* <TouchableOpacity
         style={styles.fab}
         onPress={() => navigation.navigate('AddProduct')}
         activeOpacity={0.8}
       >
         <Ionicons name="add" size={28} color={Colors.white} />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </SafeAreaView>
   );
 };
@@ -264,6 +271,16 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     color: Colors.textSecondary,
     marginTop: 2,
+  },
+
+  addButton: {
+    width: 42,
+    height: 42,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadow.sm,
   },
 
   // Alert Row
@@ -300,23 +317,27 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
   },
   categoryChip: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
+    height: 34,
+    paddingHorizontal: Spacing.lg,
     borderRadius: BorderRadius.full,
     backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.border,
     marginRight: Spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   categoryChipActive: {
     backgroundColor: Colors.primary,
     borderColor: Colors.primary,
   },
+
   categoryChipText: {
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
     color: Colors.textSecondary,
   },
+
   categoryChipTextActive: {
     color: Colors.white,
   },
@@ -460,16 +481,16 @@ const styles = StyleSheet.create({
   },
 
   // FAB
-  fab: {
-    position: 'absolute',
-    bottom: 24,
-    right: Spacing.xl,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Shadow.lg,
-  },
+  // fab: {
+  //   position: 'absolute',
+  //   bottom: 24,
+  //   right: Spacing.xl,
+  //   width: 56,
+  //   height: 56,
+  //   borderRadius: 28,
+  //   backgroundColor: Colors.primary,
+  //   alignItems: 'center',
+  //   justifyContent: 'center',
+  //   ...Shadow.lg,
+  // },
 });

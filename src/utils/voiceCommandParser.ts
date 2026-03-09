@@ -35,9 +35,9 @@ const STOCK_KEYWORDS = [
 // Words to strip from name extraction
 const NOISE_WORDS = new Set([
   'ko', 'ka', 'ki', 'ke', 'ne', 'se', 'me', 'hai', 'hain',
-  'karo', 'kro', 'do', 'de', 'dedo', 'kar', 'likh', 'likho',
+  'karo', 'kro', 'karaye', 'do', 'de', 'dedo', 'kar', 'likh', 'likho',
   'the', 'for', 'to', 'of', 'in', 'a', 'an', 'is', 'was',
-  'rupees', 'rupaye', 'rupiya', 'rs', 'please', 'krdo',
+  'rupees', 'rupay', 'rupaye', 'rupiya', 'rs', 'please', 'krdo',
   'udhaar', 'udhar', 'credit', 'payment', 'paid', 'jama',
   'add', 'stock', 'jodo', 'diye', 'diya', 'bhugtan',
   'liter', 'litre', 'packet', 'piece', 'pieces', 'kg', 'kilo',
@@ -152,7 +152,12 @@ export function fuzzyMatch(input: string, candidates: string[]): string | null {
 
     // Starts with
     if (candidateLower.startsWith(inputLower) || inputLower.startsWith(candidateLower)) {
-      const score = Math.min(inputLower.length, candidateLower.length) / Math.max(inputLower.length, candidateLower.length);
+      const score =
+        0.8 +
+        (Math.min(inputLower.length, candidateLower.length) /
+          Math.max(inputLower.length, candidateLower.length)) *
+        0.2;
+
       if (score > bestScore) {
         bestScore = score;
         bestMatch = candidate;
